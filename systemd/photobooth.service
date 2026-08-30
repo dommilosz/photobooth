@@ -1,0 +1,17 @@
+[Unit]
+Description=Photobooth kiosk
+After=network.target cups.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/photobooth
+Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QPA_EGLFS_HIDECURSOR=1
+Environment=PYTHONPATH=/opt/photobooth/src
+ExecStart=/opt/photobooth/scripts/photobooth-launch.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

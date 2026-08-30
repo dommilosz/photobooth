@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photobooth"
+version = "0.1.0"
+description = "Raspberry Pi Zero 2W photobooth with template-based printing"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+photobooth = "photobooth.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
