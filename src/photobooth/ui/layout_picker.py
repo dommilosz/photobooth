@@ -8,7 +8,16 @@ from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QScrollAre
 from photobooth.compose.template_composer import render_template_preview
 from photobooth.compose.template_registry import TemplateRegistry, TemplateSpec
 from photobooth.sample_photo import sample_photo_paths
-from photobooth.ui.theme import ACCENT, BG_CARD, BORDER, TEXT, TEXT_DIM, TEXT_MUTED
+from photobooth.ui.theme import (
+    BG_ELEVATED,
+    FONT_FAMILY,
+    SECTION_TITLE,
+    TEXT,
+    TEXT_DIM,
+    TEXT_MUTED,
+    layout_picker_card,
+    scroll_horizontal,
+)
 
 CARD_W = 340
 CARD_H = 400
@@ -62,12 +71,7 @@ def _horizontal_card_row(cards: list[QWidget]) -> QScrollArea:
     scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
     scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     scroll.setFrameShape(QFrame.NoFrame)
-    scroll.setStyleSheet(
-        "QScrollArea { background: transparent; border: none; }"
-        "QScrollBar:horizontal { height: 10px; background: transparent; margin: 4px 0 0 0; }"
-        "QScrollBar::handle:horizontal { background: #555; border-radius: 5px; min-width: 24px; }"
-        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
-    )
+    scroll.setStyleSheet(scroll_horizontal())
     scroll.setFixedHeight(SCROLL_ROW_H)
 
     container = QWidget()
@@ -96,33 +100,41 @@ class LayoutModeCard(QFrame):
         self._apply_style()
 
     def _apply_style(self) -> None:
-        color = ACCENT if self._selected else BORDER
-        self.setStyleSheet(
-            f"LayoutModeCard {{ background: {BG_CARD}; border: {CARD_BORDER}px solid {color};"
-            "border-radius: 12px; }"
-        )
+        self.setStyleSheet(layout_picker_card(self._selected))
 
     def _build(self) -> None:
         inner_h = CARD_H - 2 * CARD_BORDER
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(6)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+        thumb_wrap = QFrame()
+        thumb_wrap.setStyleSheet(
+            f"background: {BG_ELEVATED}; border-radius: 8px; border: none;"
+        )
+        thumb_layout = QVBoxLayout(thumb_wrap)
+        thumb_layout.setContentsMargins(4, 4, 4, 4)
         thumb = QLabel()
-        thumb.setFixedHeight(min(THUMB_H, inner_h - 56))
+        thumb.setFixedHeight(min(THUMB_H, inner_h - 64))
         thumb.setAlignment(Qt.AlignCenter)
         preview = _preview_pixmap(self._spec)
         if preview is not None:
             thumb.setPixmap(preview)
         else:
             thumb.setText("⚠" if not self._spec.valid else "?")
+            thumb.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 28px;")
+        thumb_layout.addWidget(thumb)
         title = QLabel(self._spec.meta.name)
-        title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {TEXT};")
+        title.setStyleSheet(
+            f"font-family: {FONT_FAMILY}; font-size: 17px; font-weight: 600; color: {TEXT};"
+        )
         badge = QLabel(
             f"{self._spec.meta.capture_count} photos · "
             f"{self._spec.meta.sheet_mm[0]}×{self._spec.meta.sheet_mm[1]} mm"
         )
-        badge.setStyleSheet(f"font-size: 11px; color: {TEXT_DIM};")
-        layout.addWidget(thumb)
+        badge.setStyleSheet(
+            f"font-family: {FONT_FAMILY}; font-size: 11px; color: {TEXT_DIM};"
+        )
+        layout.addWidget(thumb_wrap)
         layout.addWidget(title)
         layout.addWidget(badge)
 
@@ -152,7 +164,7 @@ class LayoutPickerWidget(QWidget):
 
     def _section_label(self, text: str) -> QLabel:
         label = QLabel(text)
-        label.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px; font-weight: bold;")
+        label.setStyleSheet(SECTION_TITLE)
         return label
 
     def _build(self) -> None:

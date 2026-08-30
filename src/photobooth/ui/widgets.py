@@ -4,14 +4,14 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
-from photobooth.ui.theme import primary_btn, secondary_btn
+from photobooth.ui.theme import BG_DARK, FONT_FAMILY, primary_btn, secondary_btn
 
 _CORNER_STYLE = (
-    "font-size: 48px; font-weight: bold; color: white;"
-    "background: rgba(0,0,0,160); border-radius: 12px; padding: 12px 20px;"
+    f"font-family: {FONT_FAMILY}; font-size: 44px; font-weight: 700; color: white;"
+    "background: rgba(10, 10, 11, 0.75); border-radius: 14px; padding: 10px 18px;"
 )
 _FINAL_STYLE = (
-    "font-size: 96px; font-weight: bold; color: white;"
+    f"font-family: {FONT_FAMILY}; font-size: 88px; font-weight: 700; color: white;"
     "background: transparent; padding: 24px;"
 )
 _FLASH_STYLE = "background: white;"
@@ -87,12 +87,14 @@ class CountdownOverlay(QWidget):
         self._message_label = QLabel("Look at the camera")
         self._message_label.setAlignment(Qt.AlignCenter)
         self._message_label.setStyleSheet(
-            "font-size: 42px; font-weight: bold; color: white; background: transparent;"
+            f"font-family: {FONT_FAMILY}; font-size: 38px; font-weight: 600;"
+            "color: white; background: transparent;"
         )
         self._number_label = QLabel()
         self._number_label.setAlignment(Qt.AlignCenter)
         self._number_label.setStyleSheet(
-            "font-size: 96px; font-weight: bold; color: white; background: transparent;"
+            f"font-family: {FONT_FAMILY}; font-size: 88px; font-weight: 700;"
+            "color: white; background: transparent;"
         )
         final_layout.addStretch()
         final_layout.addWidget(self._camera_icon)
@@ -129,13 +131,13 @@ class CountdownOverlay(QWidget):
             self._corner_label.show()
         elif n > 0:
             self._mode = "final"
-            self.setStyleSheet("background: #111;")
+            self.setStyleSheet(f"background: {BG_DARK};")
             self._corner_label.hide()
             self._number_label.setText(str(n))
             self._final_panel.show()
         else:
             self._mode = "final"
-            self.setStyleSheet("background: #111;")
+            self.setStyleSheet(f"background: {BG_DARK};")
             self._corner_label.hide()
             self._final_panel.hide()
             self._corner_label.setStyleSheet(_FINAL_STYLE)

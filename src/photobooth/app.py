@@ -13,11 +13,14 @@ from photobooth.compose.template_registry import TemplateRegistry
 from photobooth.config import load_config
 from photobooth.paths import ensure_data_dirs
 from photobooth.ui.screens import PhotoboothApp
+from photobooth.ui.theme import app_stylesheet
 
 
 def run_app(cfg: dict, mock: bool = False, dev: bool = False) -> int:
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    app.setStyleSheet(app_stylesheet())
     ensure_data_dirs(cfg)
     registry = TemplateRegistry(cfg)
     camera = create_camera(cfg, mock=mock)

@@ -1,89 +1,177 @@
 """Shared visual styles for the photobooth UI."""
 
-BG_DARK = "#0d0d0d"
-BG_PAGE = "#1a1a1a"
-BG_NAV = "#222"
-BG_CARD = "#252525"
-BORDER = "#333"
-TEXT = "#eee"
-TEXT_DIM = "#aaa"
-TEXT_MUTED = "#888"
-ACCENT = "#2ecc71"
-ACCENT_DIM = "#27ae60"
+BG_DARK = "#0a0a0b"
+BG_PAGE = "#121214"
+BG_NAV = "#1a1a1d"
+BG_CARD = "#1f1f22"
+BG_ELEVATED = "#28282c"
+BORDER = "#34343a"
+BORDER_SUBTLE = "#2a2a2e"
+TEXT = "#f4f4f5"
+TEXT_DIM = "#a1a1aa"
+TEXT_MUTED = "#71717a"
+ACCENT = "#3ecf8e"
+ACCENT_DIM = "#2eb872"
+ACCENT_SOFT = "rgba(62, 207, 142, 0.14)"
 LINK = "#7eb8da"
+RADIUS_SM = 8
+RADIUS_MD = 12
+RADIUS_LG = 16
+FONT_FAMILY = '"Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif'
 
 BTN_PRIMARY = (
-    "QPushButton {{ background: {accent}; color: #fff; font-size: {size}px;"
-    "font-weight: bold; border-radius: {radius}px; border: none; padding: {pad}; }}"
+    "QPushButton {{ background: {accent}; color: #0a0a0b; font-family: {font};"
+    "font-size: {size}px; font-weight: 700; letter-spacing: 0.5px;"
+    "border-radius: {radius}px; border: none; padding: {pad}; }}"
+    "QPushButton:hover {{ background: #4fe0a0; }}"
     "QPushButton:pressed {{ background: {pressed}; }}"
 )
 
 BTN_SECONDARY = (
-    "QPushButton {{ background: #3a3a3a; color: {text}; font-size: {size}px;"
-    "border-radius: {radius}px; border: none; padding: {pad}; }}"
-    "QPushButton:pressed {{ background: #2f2f2f; }}"
+    "QPushButton {{ background: {bg}; color: {text}; font-family: {font};"
+    "font-size: {size}px; font-weight: 600; border-radius: {radius}px;"
+    "border: 1px solid {border}; padding: {pad}; }}"
+    "QPushButton:hover {{ background: {hover}; border-color: #48484f; }}"
+    "QPushButton:pressed {{ background: #222226; }}"
 )
 
 BTN_ICON = (
-    "QPushButton { background: rgba(255,255,255,30); color: #fff; font-size: 22px;"
-    "border-radius: 24px; border: 1px solid rgba(255,255,255,40); }"
-    "QPushButton:pressed { background: rgba(255,255,255,50); }"
+    f"QPushButton {{ background: {BG_ELEVATED}; color: {TEXT}; font-family: {FONT_FAMILY};"
+    f"font-size: 20px; border-radius: 22px; border: 1px solid {BORDER}; }}"
+    f"QPushButton:hover {{ background: #323238; border-color: #48484f; }}"
+    f"QPushButton:pressed {{ background: #26262a; }}"
 )
 
 CARD = (
-    "QFrame {{ background: {bg}; border: 1px solid {border}; border-radius: 12px; }}"
-)
-
-GRADIENT_TOP = (
-    "QFrame {{ background: qlineargradient("
-    "x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0,0,0,200), stop:1 rgba(0,0,0,0)); }}"
-)
-
-GRADIENT_BOTTOM = (
-    "QFrame {{ background: qlineargradient("
-    "x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0,0,0,0), stop:1 rgba(0,0,0,220)); }}"
+    "QFrame {{ background: {bg}; border: 1px solid {border}; border-radius: {radius}px; }}"
 )
 
 SECTION_TITLE = (
-    "color: {muted}; font-size: 12px; font-weight: bold;"
-    "letter-spacing: 1px; margin-top: 4px;"
-).format(muted=TEXT_MUTED)
+    f"color: {TEXT_MUTED}; font-family: {FONT_FAMILY}; font-size: 11px; font-weight: 700;"
+    "letter-spacing: 1.2px; margin-top: 8px; padding-bottom: 2px;"
+)
 
-FIELD_LABEL = f"color: {TEXT_DIM}; font-size: 14px; background: transparent;"
+PAGE_TITLE = (
+    f"color: {TEXT}; font-family: {FONT_FAMILY}; font-size: 18px; font-weight: 600;"
+)
+
+FIELD_LABEL = (
+    f"color: {TEXT_DIM}; font-family: {FONT_FAMILY}; font-size: 13px;"
+    "font-weight: 500; background: transparent; padding-bottom: 2px;"
+)
 
 SPINBOX = (
-    f"QSpinBox {{ background: #333; color: {TEXT}; border: 1px solid #444;"
-    f"border-radius: 8px; padding: 10px; font-size: 16px; min-height: 20px; }}"
+    f"QSpinBox {{ background: {BG_ELEVATED}; color: {TEXT}; font-family: {FONT_FAMILY};"
+    f"border: 1px solid {BORDER}; border-radius: {RADIUS_SM}px; padding: 10px 12px;"
+    f"font-size: 15px; min-height: 20px; }}"
+    f"QSpinBox:focus {{ border-color: {ACCENT}; }}"
 )
 
 LINE_EDIT = (
-    f"QLineEdit {{ background: #333; color: {TEXT}; border: 1px solid #444;"
-    f"border-radius: 8px; padding: 10px; font-size: 16px; }}"
+    f"QLineEdit {{ background: {BG_ELEVATED}; color: {TEXT}; font-family: {FONT_FAMILY};"
+    f"border: 1px solid {BORDER}; border-radius: {RADIUS_SM}px; padding: 10px 12px;"
+    f"font-size: 15px; }}"
+    f"QLineEdit:focus {{ border-color: {ACCENT}; }}"
 )
 
 LINK_BTN = (
-    f"QPushButton {{ background: transparent; color: {LINK}; font-size: 14px;"
-    f"border: none; text-align: left; padding: 4px 0; }}"
-    f"QPushButton:pressed {{ color: #5a9bc4; }}"
+    f"QPushButton {{ background: transparent; color: {LINK}; font-family: {FONT_FAMILY};"
+    f"font-size: 13px; font-weight: 500; border: none; text-align: left; padding: 6px 0; }}"
+    f"QPushButton:hover {{ color: #9eccef; }}"
 )
 
 CHECKBOX = (
-    f"QCheckBox {{ color: {TEXT}; font-size: 16px; spacing: 10px; background: transparent; }}"
-    f"QCheckBox::indicator {{ width: 22px; height: 22px; border-radius: 6px;"
-    f"border: 1px solid #555; background: #333; }}"
+    f"QCheckBox {{ color: {TEXT}; font-family: {FONT_FAMILY}; font-size: 15px;"
+    f"spacing: 10px; background: transparent; }}"
+    f"QCheckBox::indicator {{ width: 20px; height: 20px; border-radius: 5px;"
+    f"border: 1px solid {BORDER}; background: {BG_ELEVATED}; }}"
     f"QCheckBox::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT_DIM}; }}"
+)
+
+LAYOUT_PILL = (
+    f"QFrame {{ background: {BG_ELEVATED}; border: 1px solid {BORDER};"
+    f"border-radius: {RADIUS_MD}px; }}"
+    f"QFrame:hover {{ background: #303036; border-color: #48484f; }}"
+)
+
+SCROLL_AREA = (
+    "QScrollArea { background: transparent; border: none; }"
+    f"QScrollBar:vertical {{ width: 8px; background: transparent; margin: 4px 2px; }}"
+    f"QScrollBar::handle:vertical {{ background: #48484f; border-radius: 4px; min-height: 24px; }}"
+    f"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}"
+)
+
+SCROLL_HORIZONTAL = (
+    "QScrollArea { background: transparent; border: none; }"
+    "QScrollBar:horizontal { height: 8px; background: transparent; margin: 6px 0 0 0; }"
+    "QScrollBar::handle:horizontal { background: #48484f; border-radius: 4px; min-width: 32px; }"
+    "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
 )
 
 
 def primary_btn(size: int = 28, radius: int = 14, pad: str = "0 32px") -> str:
     return BTN_PRIMARY.format(
-        accent=ACCENT, pressed=ACCENT_DIM, size=size, radius=radius, pad=pad
+        accent=ACCENT,
+        pressed=ACCENT_DIM,
+        size=size,
+        radius=radius,
+        pad=pad,
+        font=FONT_FAMILY,
     )
 
 
 def secondary_btn(size: int = 18, radius: int = 12, pad: str = "0 24px") -> str:
-    return BTN_SECONDARY.format(text=TEXT, size=size, radius=radius, pad=pad)
+    return BTN_SECONDARY.format(
+        text=TEXT,
+        bg=BG_ELEVATED,
+        hover="#323238",
+        border=BORDER,
+        size=size,
+        radius=radius,
+        pad=pad,
+        font=FONT_FAMILY,
+    )
 
 
-def card_style() -> str:
-    return CARD.format(bg=BG_CARD, border=BORDER)
+def card_style(radius: int = RADIUS_MD) -> str:
+    return CARD.format(bg=BG_CARD, border=BORDER_SUBTLE, radius=radius)
+
+
+def nav_bar() -> str:
+    return f"background: {BG_NAV}; border-bottom: 1px solid {BORDER_SUBTLE};"
+
+
+def dock_bar() -> str:
+    return f"background: {BG_NAV}; border-top: 1px solid {BORDER_SUBTLE};"
+
+
+def scroll_horizontal() -> str:
+    return SCROLL_HORIZONTAL
+
+
+def layout_picker_card(selected: bool) -> str:
+    border = ACCENT if selected else BORDER_SUBTLE
+    bg = ACCENT_SOFT if selected else BG_CARD
+    return (
+        f"LayoutModeCard {{ background: {bg}; border: 3px solid {border};"
+        f"border-radius: {RADIUS_MD}px; }}"
+    )
+
+
+def app_stylesheet() -> str:
+    return f"""
+        QWidget {{
+            font-family: {FONT_FAMILY};
+            color: {TEXT};
+        }}
+        QLabel {{
+            background: transparent;
+        }}
+        QToolTip {{
+            background: {BG_ELEVATED};
+            color: {TEXT};
+            border: 1px solid {BORDER};
+            padding: 6px 10px;
+            border-radius: 6px;
+        }}
+    """

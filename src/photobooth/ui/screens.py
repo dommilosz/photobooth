@@ -33,18 +33,23 @@ from photobooth.ui.layout_picker import LayoutPickerWidget
 from photobooth.ui.preview import PreviewViewport, PreviewWidget, ScaledImageLabel
 from photobooth.ui.theme import (
     BG_DARK,
-    BG_NAV,
     BG_PAGE,
-    BTN_ICON,
     CHECKBOX,
     FIELD_LABEL,
+    FONT_FAMILY,
+    LAYOUT_PILL,
     LINE_EDIT,
     LINK_BTN,
+    PAGE_TITLE,
+    SCROLL_AREA,
     SECTION_TITLE,
     SPINBOX,
     TEXT,
     TEXT_DIM,
+    TEXT_MUTED,
     card_style,
+    dock_bar,
+    nav_bar,
     primary_btn,
     secondary_btn,
 )
@@ -174,19 +179,19 @@ class PhotoboothApp(QWidget):
     def _make_page_nav(self, title_text: str) -> QFrame:
         nav = QFrame()
         nav.setFixedHeight(72)
-        nav.setStyleSheet(f"background: {BG_NAV}; border-bottom: 1px solid #333;")
+        nav.setStyleSheet(nav_bar())
         row = QHBoxLayout(nav)
         row.setContentsMargins(20, 8, 20, 8)
         title = QLabel(title_text)
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {TEXT};")
+        title.setStyleSheet(PAGE_TITLE)
         row.addWidget(title)
         return nav
 
     def _make_bottom_dock(self) -> QFrame:
         dock = QFrame()
         dock.setFixedHeight(100)
-        dock.setStyleSheet(f"background: {BG_NAV}; border-top: 1px solid #333;")
+        dock.setStyleSheet(dock_bar())
         return dock
 
     def _build_review_page(self) -> QWidget:
@@ -210,7 +215,8 @@ class PhotoboothApp(QWidget):
         content_layout.addWidget(frame, stretch=1)
 
         self._upload_status.setStyleSheet(
-            f"color: {TEXT_DIM}; font-size: 15px; background: transparent; padding: 4px;"
+            f"color: {TEXT_DIM}; font-family: {FONT_FAMILY}; font-size: 14px;"
+            "background: transparent; padding: 6px;"
         )
         content_layout.addWidget(self._upload_status)
         root.addWidget(content, stretch=1)
@@ -239,17 +245,18 @@ class PhotoboothApp(QWidget):
 
     def _build_top_bar(self) -> QFrame:
         bar = QFrame()
-        bar.setStyleSheet(f"background: {BG_NAV}; border-bottom: 1px solid #333;")
+        bar.setStyleSheet(nav_bar())
         row = QHBoxLayout(bar)
         row.setContentsMargins(20, 12, 20, 12)
         self._event_label = QLabel(self.cfg.get("event_name", "photobooth"))
         self._event_label.setStyleSheet(
-            f"color: {TEXT}; font-size: 18px; font-weight: bold; background: transparent;"
+            f"color: {TEXT}; font-family: {FONT_FAMILY}; font-size: 17px;"
+            "font-weight: 600; background: transparent; letter-spacing: 0.3px;"
         )
-        settings_btn = QPushButton("⚙")
-        settings_btn.setFixedSize(48, 48)
+        settings_btn = QPushButton("Settings")
+        settings_btn.setFixedHeight(40)
         settings_btn.setCursor(Qt.PointingHandCursor)
-        settings_btn.setStyleSheet(BTN_ICON)
+        settings_btn.setStyleSheet(secondary_btn(size=14, radius=10, pad="0 16px"))
         settings_btn.clicked.connect(self._show_settings)
         row.addWidget(self._event_label)
         row.addStretch()
@@ -258,28 +265,26 @@ class PhotoboothApp(QWidget):
 
     def _build_bottom_idle(self) -> QFrame:
         dock = QFrame()
-        dock.setStyleSheet(f"background: {BG_NAV}; border-top: 1px solid #333;")
+        dock.setStyleSheet(dock_bar())
         row = QHBoxLayout(dock)
         row.setContentsMargins(20, 16, 20, 20)
         row.setSpacing(16)
 
         layout_btn = QFrame()
         layout_btn.setCursor(Qt.PointingHandCursor)
-        layout_btn.setStyleSheet(
-            "QFrame { background: rgba(255,255,255,18); border: 1px solid rgba(255,255,255,35);"
-            "border-radius: 12px; }"
-            "QFrame:hover { background: rgba(255,255,255,28); }"
-        )
+        layout_btn.setStyleSheet(LAYOUT_PILL)
         layout_inner = QVBoxLayout(layout_btn)
-        layout_inner.setContentsMargins(14, 10, 14, 10)
-        layout_inner.setSpacing(2)
+        layout_inner.setContentsMargins(16, 12, 16, 12)
+        layout_inner.setSpacing(3)
         self._layout_badge = QLabel()
         self._layout_badge.setStyleSheet(
-            "color: #fff; font-size: 16px; font-weight: bold; background: transparent;"
+            f"color: {TEXT}; font-family: {FONT_FAMILY}; font-size: 15px;"
+            "font-weight: 600; background: transparent;"
         )
         self._layout_detail = QLabel()
         self._layout_detail.setStyleSheet(
-            "color: #aaa; font-size: 12px; background: transparent;"
+            f"color: {TEXT_MUTED}; font-family: {FONT_FAMILY}; font-size: 12px;"
+            "background: transparent;"
         )
         layout_inner.addWidget(self._layout_badge)
         layout_inner.addWidget(self._layout_detail)
@@ -300,18 +305,20 @@ class PhotoboothApp(QWidget):
     def _build_bottom_capture(self) -> QFrame:
         bar = QFrame()
         bar.setStyleSheet(
-            "QFrame { background: rgba(0,0,0,190); border-top: 1px solid rgba(255,255,255,25); }"
+            f"QFrame {{ background: rgba(10, 10, 11, 0.92); border-top: 1px solid #2a2a2e; }}"
         )
         layout = QVBoxLayout(bar)
-        layout.setContentsMargins(24, 10, 24, 12)
-        layout.setSpacing(2)
+        layout.setContentsMargins(24, 12, 24, 14)
+        layout.setSpacing(4)
         self._progress.setStyleSheet(
-            f"font-size: 22px; color: {TEXT}; background: transparent; font-weight: bold;"
+            f"font-family: {FONT_FAMILY}; font-size: 20px; color: {TEXT};"
+            "background: transparent; font-weight: 600;"
         )
         self._capture_hint = QLabel("Smile when the countdown ends")
         self._capture_hint.setAlignment(Qt.AlignCenter)
         self._capture_hint.setStyleSheet(
-            f"color: {TEXT_DIM}; font-size: 13px; background: transparent;"
+            f"color: {TEXT_MUTED}; font-family: {FONT_FAMILY}; font-size: 13px;"
+            "background: transparent;"
         )
         layout.addWidget(self._progress)
         layout.addWidget(self._capture_hint)
@@ -326,21 +333,21 @@ class PhotoboothApp(QWidget):
 
         nav = QFrame()
         nav.setFixedHeight(72)
-        nav.setStyleSheet(f"background: {BG_NAV}; border-bottom: 1px solid #333;")
+        nav.setStyleSheet(nav_bar())
         nav_row = QHBoxLayout(nav)
         nav_row.setContentsMargins(16, 8, 16, 8)
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setFixedHeight(48)
+        cancel_btn.setFixedSize(100, 48)
         cancel_btn.setCursor(Qt.PointingHandCursor)
-        cancel_btn.setStyleSheet(secondary_btn(size=16, radius=8, pad="0 20px"))
+        cancel_btn.setStyleSheet(secondary_btn(size=15, radius=10, pad="0 16px"))
         cancel_btn.clicked.connect(self._cancel_settings)
         title = QLabel("Settings")
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {TEXT};")
+        title.setStyleSheet(PAGE_TITLE)
         save_btn = QPushButton("Save")
-        save_btn.setFixedHeight(48)
+        save_btn.setFixedSize(100, 48)
         save_btn.setCursor(Qt.PointingHandCursor)
-        save_btn.setStyleSheet(primary_btn(size=16, radius=8, pad="0 24px"))
+        save_btn.setStyleSheet(primary_btn(size=15, radius=10, pad="0 20px"))
         save_btn.clicked.connect(self._save_and_exit_settings)
         nav_row.addWidget(cancel_btn)
         nav_row.addWidget(title, stretch=1)
@@ -350,7 +357,7 @@ class PhotoboothApp(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setStyleSheet(SCROLL_AREA)
         content = QWidget()
         content.setStyleSheet("background: transparent;")
         layout = QVBoxLayout(content)
@@ -358,16 +365,21 @@ class PhotoboothApp(QWidget):
         layout.setSpacing(16)
 
         layout.addWidget(self._settings_section_title("Print layout"))
+        layout_card = self._settings_card()
+        layout_card_layout = QVBoxLayout(layout_card)
+        layout_card_layout.setContentsMargins(16, 16, 16, 16)
+        layout_card_layout.setSpacing(12)
         picker = LayoutPickerWidget(
             self.registry, self.cfg.get("layout", {}).get("mode", "strip_4_classic")
         )
         self._picker = picker
-        layout.addWidget(picker)
+        layout_card_layout.addWidget(picker)
         reload_btn = QPushButton("Reload templates from disk")
         reload_btn.setCursor(Qt.PointingHandCursor)
         reload_btn.setStyleSheet(LINK_BTN)
         reload_btn.clicked.connect(self._reload_templates)
-        layout.addWidget(reload_btn)
+        layout_card_layout.addWidget(reload_btn)
+        layout.addWidget(layout_card)
 
         layout.addWidget(self._settings_section_title("Capture"))
         capture_card = self._settings_card()
