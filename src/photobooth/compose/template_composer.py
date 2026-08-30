@@ -1,25 +1,61 @@
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 
 from PIL import Image
 
 from photobooth.compose.slot_detector import clear_slot_regions, photo_rect
-from photobooth.compose.template_registry import TemplateRegistry
+from photobooth.compose.svg_template import compose_svg, render_svg_to_image
+from photobooth.compose.template_registry import TemplateRegistry, TemplateSpec
 from photobooth.compose.utils import duplicate_strip_to_sheet, fit_photo, mm_to_px
 
 
 def render_template_preview(
+    spec: TemplateSpec,
+    photos: list[Path],
+    *,
+    width: int | None = None,
+    height: int | None = None,
+) -> Image.Image:
+    """Compose template with photos for UI previews."""
+    mapping = spec.meta.slot_mapping
+    if spec.format == "svg":
+        tw, th = spec.template_size_px()
+        if width is None:
+            width = tw
+        if height is None:
+            height = th
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+        try:
+            compose_svg(
+                spec.template_path,
+                photos,
+                mapping,
+                tmp_path,
+                render_width=width,
+                render_height=height,
+            )
+            return render_svg_to_image(tmp_path, width, height)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    if not spec.image:
+        raise RuntimeError("Template image not loaded")
+    return _render_png_template(spec.image, spec.slots, mapping, photos)
+
+
+def render_template_preview_legacy(
     template: Image.Image,
     slots,
     mapping: list[int],
     photos: list[Path],
 ) -> Image.Image:
-    """Compose template with photos for UI previews."""
-    return _render_template(template, slots, mapping, photos)
+    return _render_png_template(template, slots, mapping, photos)
 
 
-def _render_template(
+def _render_png_template(
     template: Image.Image,
     slots,
     mapping: list[int],
@@ -47,16 +83,37 @@ def compose_sheet(
     dpi: int = 300,
 ) -> Path:
     spec = registry.load(mode_id)
-    if not spec.image:
-        raise RuntimeError(f"Template not loaded: {mode_id}")
+    if not spec.valid:
+        raise RuntimeError(spec.error or f"Template not valid: {mode_id}")
     mapping = spec.meta.slot_mapping
     if len(spec.slots) != len(mapping):
         raise RuntimeError(spec.error or "Slot count mismatch")
 
-    strip = _render_template(spec.image, spec.slots, mapping, photos)
+    print_w = mm_to_px(spec.meta.sheet_mm[0], dpi)
+    print_h = mm_to_px(spec.meta.sheet_mm[1], dpi)
+    strip_w, strip_h = registry.template_size_px(mode_id, dpi)
+
+    if spec.format == "svg":
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp:
+            composed_svg = Path(tmp.name)
+        try:
+            compose_svg(
+                spec.template_path,
+                photos,
+                mapping,
+                composed_svg,
+                render_width=strip_w,
+                render_height=strip_h,
+            )
+            strip = render_svg_to_image(composed_svg, strip_w, strip_h)
+        finally:
+            composed_svg.unlink(missing_ok=True)
+    else:
+        if not spec.image:
+            raise RuntimeError(f"Template not loaded: {mode_id}")
+        strip = _render_png_template(spec.image, spec.slots, mapping, photos)
+
     if spec.meta.category == "strip":
-        print_w = mm_to_px(spec.meta.sheet_mm[0], dpi)
-        print_h = mm_to_px(spec.meta.sheet_mm[1], dpi)
         result = duplicate_strip_to_sheet(
             strip, print_w, print_h, sheet_width_mm=spec.meta.sheet_mm[0], dpi=dpi
         )

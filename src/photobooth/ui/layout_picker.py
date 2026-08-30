@@ -35,7 +35,7 @@ def _pil_to_pixmap(image) -> QPixmap:
 
 
 def _preview_pixmap(spec: TemplateSpec) -> QPixmap | None:
-    if not spec.image or not spec.valid or not spec.slots:
+    if not spec.valid or not spec.slots:
         return None
     mapping = spec.meta.slot_mapping
     if len(spec.slots) != len(mapping):
@@ -44,12 +44,12 @@ def _preview_pixmap(spec: TemplateSpec) -> QPixmap | None:
     photos = sample_photo_paths(photo_count)
     if not photos:
         return None
-    rendered = render_template_preview(spec.image, spec.slots, mapping, photos)
-    w, h = spec.image.size
-    scale = min(THUMB_W / w, THUMB_H / h)
-    tw, th = int(w * scale), int(h * scale)
+    tw, th = spec.template_size_px()
+    scale = min(THUMB_W / tw, THUMB_H / th)
+    render_w, render_h = max(1, int(tw * scale)), max(1, int(th * scale))
+    rendered = render_template_preview(spec, photos, width=render_w, height=render_h)
     pix = _pil_to_pixmap(rendered)
-    return pix.scaled(tw, th, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    return pix.scaled(render_w, render_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
 
 def _clear_layout(layout) -> None:
