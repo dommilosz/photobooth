@@ -91,6 +91,7 @@ class LayoutModeCard(QFrame):
 
     def __init__(self, spec, selected: bool = False, parent=None) -> None:
         super().__init__(parent)
+        self.setObjectName("layoutModeCard")
         self._mode_id = spec.mode_id
         self.setFixedSize(CARD_W, CARD_H)
         self.setCursor(Qt.PointingHandCursor)

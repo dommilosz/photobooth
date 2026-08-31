@@ -153,8 +153,9 @@ def layout_picker_card(selected: bool) -> str:
     border = ACCENT if selected else BORDER_SUBTLE
     bg = ACCENT_SOFT if selected else BG_CARD
     return (
-        f"LayoutModeCard {{ background: {bg}; border: 3px solid {border};"
+        f"QFrame#layoutModeCard {{ background: {bg}; border: 3px solid {border};"
         f"border-radius: {RADIUS_MD}px; }}"
+        f"QFrame#layoutModeCard QLabel {{ background: transparent; }}"
     )
 
 
