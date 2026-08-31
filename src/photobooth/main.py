@@ -10,8 +10,17 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from photobooth.app import run_app
 from photobooth.config import load_config
+from photobooth.ui.vkb_env import enable_qt_virtual_keyboard
+
+
+def _bootstrap_virtual_keyboard(config_path: Path | None) -> None:
+    cfg = load_config(config_path)
+    if cfg.get("ui", {}).get("virtual_keyboard", True):
+        enable_qt_virtual_keyboard()
+
+
+from photobooth.app import run_app
 
 
 def main() -> None:
@@ -25,6 +34,7 @@ def main() -> None:
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    _bootstrap_virtual_keyboard(args.config)
     cfg = load_config(args.config)
     sys.exit(run_app(cfg, mock=args.mock, dev=args.dev))
 

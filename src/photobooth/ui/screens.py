@@ -54,6 +54,7 @@ from photobooth.ui.theme import (
     secondary_btn,
 )
 from photobooth.ui.widgets import ActionButton, CountdownOverlay
+from photobooth.ui.virtual_keyboard import create_virtual_keyboard_panel
 
 log = logging.getLogger(__name__)
 
@@ -434,6 +435,12 @@ class PhotoboothApp(QWidget):
         layout.addStretch()
         scroll.setWidget(content)
         root.addWidget(scroll, stretch=1)
+
+        if self.cfg.get("ui", {}).get("virtual_keyboard", True):
+            vkb = create_virtual_keyboard_panel(page)
+            if vkb is not None:
+                root.addWidget(vkb)
+
         return page
 
     def _settings_section_title(self, text: str) -> QLabel:

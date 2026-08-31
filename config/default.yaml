@@ -2,6 +2,8 @@ display:
   width: 1024
   height: 600
   fullscreen: true
+ui:
+  virtual_keyboard: true
 camera:
   device: 0
   fourcc: MJPG
