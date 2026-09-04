@@ -1,18 +1,38 @@
 from __future__ import annotations
 
+import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
 
 def fit_photo(photo: Image.Image, width: int, height: int) -> Image.Image:
-    src = photo.convert("RGB")
-    sw, sh = src.size
+    """Cover-fit photo into width×height (center-crop). Uses OpenCV for speed on Pi."""
+    if photo.mode != "RGB":
+        photo = photo.convert("RGB")
+    src = np.asarray(photo)
+    sh, sw = src.shape[:2]
+    if sw < 1 or sh < 1 or width < 1 or height < 1:
+        return Image.new("RGB", (max(1, width), max(1, height)), (0, 0, 0))
+
     scale = max(width / sw, height / sh)
-    nw, nh = int(sw * scale), int(sh * scale)
-    resized = src.resize((nw, nh), Image.Resampling.LANCZOS)
-    left = (nw - width) // 2
-    top = (nh - height) // 2
-    return resized.crop((left, top, left + width, top + height))
+    nw = max(1, int(sw * scale + 0.5))
+    nh = max(1, int(sh * scale + 0.5))
+    if nw != sw or nh != sh:
+        interp = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_LINEAR
+        src = cv2.resize(src, (nw, nh), interpolation=interp)
+        sh, sw = src.shape[:2]
+
+    left = max(0, (sw - width) // 2)
+    top = max(0, (sh - height) // 2)
+    cropped = src[top : top + height, left : left + width]
+    if cropped.shape[0] != height or cropped.shape[1] != width:
+        # Clamp edge cases from rounding
+        out = np.zeros((height, width, 3), dtype=np.uint8)
+        h = min(height, cropped.shape[0])
+        w = min(width, cropped.shape[1])
+        out[:h, :w] = cropped[:h, :w]
+        cropped = out
+    return Image.fromarray(cropped)
 
 
 def mm_to_px(mm: float, dpi: int = 300) -> int:
@@ -34,26 +54,31 @@ def strip_column_widths(
 def _fit_strip_to_column(strip: Image.Image, column_w: int, column_h: int) -> Image.Image:
     """Fit a strip template into a print column without squashing."""
     if strip.size == (column_w, column_h):
-        return strip
-    sw, sh = strip.size
+        return strip if strip.mode == "RGB" else strip.convert("RGB")
+
+    arr = np.asarray(strip.convert("RGB"))
+    sh, sw = arr.shape[:2]
     if sh != column_h:
         scale = column_h / sh
-        strip = strip.resize((int(round(sw * scale)), column_h), Image.Resampling.LANCZOS)
-        sw = strip.width
+        nw = max(1, int(round(sw * scale)))
+        interp = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_LINEAR
+        arr = cv2.resize(arr, (nw, column_h), interpolation=interp)
+        sh, sw = arr.shape[:2]
+
     if sw == column_w:
-        return strip
+        return Image.fromarray(arr)
     if sw > column_w:
         left = (sw - column_w) // 2
-        return strip.crop((left, 0, left + column_w, column_h))
-    arr = np.array(strip.convert("RGBA"))
-    canvas = np.zeros((column_h, column_w, 4), dtype=np.uint8)
+        return Image.fromarray(arr[:, left : left + column_w])
+
+    canvas = np.zeros((column_h, column_w, 3), dtype=np.uint8)
     x0 = (column_w - sw) // 2
     canvas[:, x0 : x0 + sw] = arr
     if x0 > 0:
         canvas[:, :x0] = arr[:, :1]
     if x0 + sw < column_w:
         canvas[:, x0 + sw :] = arr[:, -1:]
-    return Image.fromarray(canvas, "RGBA")
+    return Image.fromarray(canvas)
 
 
 def _draw_dashed_vline(
@@ -93,8 +118,8 @@ def duplicate_strip_to_sheet(
     col1_w, col2_w = strip_column_widths(print_width, sheet_width_mm, dpi)
     left = _fit_strip_to_column(strip, col1_w, print_height)
     right = _fit_strip_to_column(strip, col2_w, print_height)
-    sheet = Image.new("RGBA", (print_width, print_height), (255, 255, 255, 255))
-    sheet.paste(left.convert("RGB"), (0, 0))
-    sheet.paste(right.convert("RGB"), (col1_w, 0))
+    sheet = Image.new("RGB", (print_width, print_height), (255, 255, 255))
+    sheet.paste(left, (0, 0))
+    sheet.paste(right, (col1_w, 0))
     _draw_strip_cut_line(sheet, col1_w, dpi=dpi)
     return sheet

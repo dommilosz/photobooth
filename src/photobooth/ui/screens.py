@@ -74,6 +74,32 @@ class UploadWorker(QThread):
         self.finished_ok.emit(ok)
 
 
+class ComposeWorker(QThread):
+    finished_ok = pyqtSignal(str)
+    failed = pyqtSignal(str)
+
+    def __init__(
+        self,
+        photos: list[Path],
+        registry: TemplateRegistry,
+        mode: str,
+        output: Path,
+    ) -> None:
+        super().__init__()
+        self._photos = photos
+        self._registry = registry
+        self._mode = mode
+        self._output = output
+
+    def run(self) -> None:
+        try:
+            compose_sheet(self._photos, self._registry, self._mode, self._output)
+            self.finished_ok.emit(str(self._output))
+        except Exception as e:
+            log.exception("Compose failed")
+            self.failed.emit(str(e))
+
+
 class PhotoboothApp(QWidget):
     def __init__(
         self,
@@ -598,17 +624,23 @@ class PhotoboothApp(QWidget):
         mode = self.cfg.get("layout", {}).get("mode", "strip_4_classic")
         prints = app_root() / self.cfg.get("paths", {}).get("prints_dir", "data/prints")
         self._sheet_path = prints / f"{self._session_id}_sheet.jpg"
-        try:
-            compose_sheet([Path(p) for p in paths], self.registry, mode, self._sheet_path)
-        except Exception as e:
-            log.exception("Compose failed")
-            self._on_error(str(e))
-            return
+        self._upload_status.setText("Creating print…")
+        self._main_stack.setCurrentIndex(1)
+        self._review_source = None
+        self._update_review_image()
+        self._compose_worker = ComposeWorker(
+            [Path(p) for p in paths], self.registry, mode, self._sheet_path
+        )
+        self._compose_worker.finished_ok.connect(self._on_compose_done)
+        self._compose_worker.failed.connect(self._on_error)
+        self._compose_worker.start()
+
+    def _on_compose_done(self, sheet_path: str) -> None:
+        self._sheet_path = Path(sheet_path)
         self._review_source = QPixmap(str(self._sheet_path))
         self._update_review_image()
-        self._main_stack.setCurrentIndex(1)
         self._upload_status.setText("Uploading…")
-        files = {Path(p).name: Path(p) for p in paths}
+        files = {Path(p).name: Path(p) for p in self._session_paths}
         files["sheet.jpg"] = self._sheet_path
         self._upload_worker = UploadWorker(self.upload, self._session_id, files)
         self._upload_worker.finished_ok.connect(self._on_upload_done)

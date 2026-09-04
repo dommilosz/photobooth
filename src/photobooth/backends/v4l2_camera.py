@@ -152,11 +152,27 @@ class V4l2Camera(CameraBackend):
     def _loop(self) -> None:
         interval = 1.0 / float(self._preview_fps)
         next_frame = time.monotonic()
-        while self._running and self._cap is not None:
-            ok, frame = self._cap.read()
-            if not ok:
-                time.sleep(0.02)
+        fail_streak = 0
+        while self._running:
+            cap = self._cap
+            if cap is None:
+                time.sleep(0.05)
                 continue
+            try:
+                ok, frame = cap.read()
+            except cv2.error as exc:
+                fail_streak += 1
+                log.warning("Camera read error (%s); streak=%d", exc, fail_streak)
+                ok, frame = False, None
+            if not ok or frame is None or getattr(frame, "size", 0) == 0:
+                fail_streak += 1
+                if fail_streak >= 8:
+                    self._reconnect_preview()
+                    fail_streak = 0
+                else:
+                    time.sleep(0.05)
+                continue
+            fail_streak = 0
             if self._mirror:
                 frame = cv2.flip(frame, 1)
             cb = self._callback
@@ -167,6 +183,22 @@ class V4l2Camera(CameraBackend):
             if sleep_for > 0:
                 time.sleep(sleep_for)
             next_frame = time.monotonic() + interval
+
+    def _reconnect_preview(self) -> None:
+        log.warning("Reconnecting camera preview…")
+        old = self._cap
+        self._cap = None
+        if old is not None:
+            try:
+                old.release()
+            except Exception:
+                pass
+        try:
+            self._cap = self._open(self._preview_size)
+            log.info("Camera reconnected")
+        except Exception:
+            log.exception("Camera reconnect failed")
+            time.sleep(0.5)
 
     def stop(self) -> None:
         self._running = False

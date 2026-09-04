@@ -10,6 +10,22 @@ from photobooth.compose.svg_template import compose_svg, render_svg_to_image
 from photobooth.compose.template_registry import TemplateRegistry, TemplateSpec
 from photobooth.compose.utils import duplicate_strip_to_sheet, fit_photo, mm_to_px
 
+# Cached punched overlays keyed by (template id(image), slot signature).
+_OVERLAY_CACHE: dict[tuple[int, tuple], Image.Image] = {}
+
+
+def _slot_sig(slots) -> tuple:
+    return tuple((s.x, s.y, s.w, s.h, s.index) for s in slots)
+
+
+def _punched_overlay(template: Image.Image, slots) -> Image.Image:
+    key = (id(template), _slot_sig(slots))
+    overlay = _OVERLAY_CACHE.get(key)
+    if overlay is None:
+        overlay = clear_slot_regions(template, slots)
+        _OVERLAY_CACHE[key] = overlay
+    return overlay
+
 
 def render_template_preview(
     spec: TemplateSpec,
@@ -79,15 +95,21 @@ def _render_png_template(
     photos: list[Path],
 ) -> Image.Image:
     canvas = Image.new("RGB", template.size, (255, 255, 255))
+    opened: dict[int, Image.Image] = {}
     for i, slot in enumerate(slots):
         photo_idx = mapping[i]
         if photo_idx >= len(photos):
             continue
         x, y, w, h = photo_rect(slot, template.size)
-        photo = Image.open(photos[photo_idx])
+        photo = opened.get(photo_idx)
+        if photo is None:
+            with Image.open(photos[photo_idx]) as im:
+                photo = im.convert("RGB")
+            opened[photo_idx] = photo
         fitted = fit_photo(photo, w, h)
         canvas.paste(fitted, (x, y))
-    overlay = clear_slot_regions(template, slots)
+    overlay = _punched_overlay(template, slots)
+    # Faster than alpha_composite when overlay is mostly opaque chrome.
     return Image.alpha_composite(canvas.convert("RGBA"), overlay)
 
 
@@ -96,7 +118,7 @@ def compose_sheet(
     registry: TemplateRegistry,
     mode_id: str,
     output: Path,
-    quality: int = 95,
+    quality: int = 90,
     dpi: int = 300,
 ) -> Path:
     spec = registry.load(mode_id)
@@ -138,5 +160,6 @@ def compose_sheet(
         result = strip
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    result.convert("RGB").save(output, "JPEG", quality=quality)
+    rgb = result if result.mode == "RGB" else result.convert("RGB")
+    rgb.save(output, "JPEG", quality=quality, optimize=False, subsampling=2)
     return output
