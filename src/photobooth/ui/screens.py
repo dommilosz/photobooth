@@ -136,7 +136,19 @@ class PhotoboothApp(QWidget):
         self._build_ui()
         self._show_idle()
         self.camera.set_frame_callback(self._store_frame)
-        self.camera.start_preview()
+        try:
+            self.camera.start_preview()
+        except Exception:
+            log.exception("Camera start failed — falling back to mock preview")
+            from photobooth.backends.mock_camera import MockCamera
+
+            try:
+                self.camera.stop()
+            except Exception:
+                pass
+            self.camera = MockCamera(self.cfg)
+            self.camera.set_frame_callback(self._store_frame)
+            self.camera.start_preview()
 
         preview_fps = max(1, int(cfg.get("camera", {}).get("preview_fps", 12)))
         self._preview_timer = QTimer(self)
