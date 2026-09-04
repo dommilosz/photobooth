@@ -7,6 +7,8 @@ log = logging.getLogger(__name__)
 
 
 class MockUpload:
+    live = False
+
     def __init__(self, cfg: dict) -> None:
         self._cfg = cfg
 

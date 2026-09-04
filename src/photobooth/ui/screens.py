@@ -53,8 +53,8 @@ from photobooth.ui.theme import (
     primary_btn,
     secondary_btn,
 )
+from photobooth.ui.soft_keyboard import SoftKeyboard
 from photobooth.ui.widgets import ActionButton, CountdownOverlay
-from photobooth.ui.virtual_keyboard import create_virtual_keyboard_panel
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +95,7 @@ class PhotoboothApp(QWidget):
         self._session_id = ""
         self._worker: SessionWorker | None = None
         self._suppress_preview = False
+        self._soft_keyboard = None
         self._progress = QLabel()
         self._progress.setAlignment(Qt.AlignCenter)
 
@@ -409,6 +410,11 @@ class PhotoboothApp(QWidget):
         event_layout.addWidget(self._event_edit)
         layout.addWidget(event_card)
 
+        self._soft_keyboard: SoftKeyboard | None = None
+        if self.cfg.get("ui", {}).get("virtual_keyboard", True):
+            self._soft_keyboard = SoftKeyboard(page)
+            self._soft_keyboard.attach(self._event_edit)
+
         layout.addWidget(self._settings_section_title("Display"))
         display_card = self._settings_card()
         display_layout = QVBoxLayout(display_card)
@@ -435,11 +441,8 @@ class PhotoboothApp(QWidget):
         layout.addStretch()
         scroll.setWidget(content)
         root.addWidget(scroll, stretch=1)
-
-        if self.cfg.get("ui", {}).get("virtual_keyboard", True):
-            vkb = create_virtual_keyboard_panel(page)
-            if vkb is not None:
-                root.addWidget(vkb)
+        if self._soft_keyboard is not None:
+            root.addWidget(self._soft_keyboard)
 
         return page
 
@@ -453,10 +456,16 @@ class PhotoboothApp(QWidget):
         card.setStyleSheet(card_style())
         return card
 
+    def _hide_soft_keyboard(self) -> None:
+        if self._soft_keyboard is not None:
+            self._soft_keyboard.hide_keyboard()
+
     def _cancel_settings(self) -> None:
+        self._hide_soft_keyboard()
         self._show_idle()
 
     def _save_and_exit_settings(self) -> None:
+        self._hide_soft_keyboard()
         self._save_settings()
         self._show_idle()
 
@@ -573,6 +582,9 @@ class PhotoboothApp(QWidget):
         self._upload_worker.start()
 
     def _on_upload_done(self, ok: bool) -> None:
+        if not getattr(self.upload, "live", False):
+            self._upload_status.setText("☁  Saved locally (upload not configured)")
+            return
         icon = "☁" if ok else "⚠"
         msg = "Uploaded to cloud" if ok else "Upload failed — queued for retry"
         self._upload_status.setText(f"{icon}  {msg}")

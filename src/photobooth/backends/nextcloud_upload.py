@@ -23,6 +23,8 @@ def extract_share_token(share_url: str) -> str:
 
 
 class NextcloudUpload:
+    live = True
+
     def __init__(self, cfg: dict) -> None:
         u = cfg.get("upload", {})
         self._share_url = u.get("share_url", "")

@@ -8,8 +8,6 @@ User=pi
 WorkingDirectory=/opt/photobooth
 Environment=QT_QPA_PLATFORM=eglfs
 Environment=QT_QPA_EGLFS_HIDECURSOR=1
-Environment=QT_IM_MODULE=qtvirtualkeyboard
-Environment=QT_VIRTUALKEYBOARD_DESKTOP_DISABLE=1
 Environment=PYTHONPATH=/opt/photobooth/src
 ExecStart=/opt/photobooth/scripts/photobooth-launch.sh
 Restart=always

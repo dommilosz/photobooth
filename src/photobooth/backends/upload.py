@@ -5,6 +5,8 @@ from pathlib import Path
 
 
 class UploadBackend(ABC):
+    live: bool = False
+
     @abstractmethod
     def upload_session(self, session_id: str, files: dict[str, Path]) -> bool:
         ...
@@ -20,7 +22,8 @@ class UploadBackend(ABC):
 
 def create_upload(cfg: dict, dev: bool = False) -> UploadBackend:
     upload_cfg = cfg.get("upload", {})
-    if not upload_cfg.get("enabled", True):
+    share_url = (upload_cfg.get("share_url") or "").strip()
+    if not upload_cfg.get("enabled", True) or not share_url or dev:
         from photobooth.backends.mock_upload import MockUpload
 
         return MockUpload(cfg)
