@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import threading
 import time
 from pathlib import Path
@@ -23,6 +22,7 @@ class V4l2Camera(CameraBackend):
         self._preview_size = tuple(cam.get("preview_size", [640, 480]))
         self._still_size = tuple(cam.get("still_size", [1920, 1080]))
         self._mirror = bool(cam.get("mirror", True))
+        self._preview_fps = max(1, int(cam.get("preview_fps", 12)))
         self._cap: Optional[cv2.VideoCapture] = None
         self._callback: Optional[Callable[[np.ndarray], None]] = None
         self._thread: Optional[threading.Thread] = None
@@ -35,6 +35,11 @@ class V4l2Camera(CameraBackend):
             cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*self._fourcc[:4]))
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self._preview_size[0])
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self._preview_size[1])
+        # Prefer lower buffer latency when supported.
+        try:
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        except Exception:
+            pass
         return cap
 
     def start_preview(self) -> None:
@@ -48,16 +53,23 @@ class V4l2Camera(CameraBackend):
         self._thread.start()
 
     def _loop(self) -> None:
+        interval = 1.0 / float(self._preview_fps)
+        next_frame = time.monotonic()
         while self._running and self._cap is not None:
             ok, frame = self._cap.read()
             if not ok:
-                time.sleep(0.01)
+                time.sleep(0.02)
                 continue
             if self._mirror:
                 frame = cv2.flip(frame, 1)
             cb = self._callback
             if cb:
                 cb(frame)
+            now = time.monotonic()
+            sleep_for = next_frame - now
+            if sleep_for > 0:
+                time.sleep(sleep_for)
+            next_frame = time.monotonic() + interval
 
     def stop(self) -> None:
         self._running = False

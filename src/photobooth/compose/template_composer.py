@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from photobooth.compose.slot_detector import clear_slot_regions, photo_rect
+from photobooth.compose.slot_detector import Slot, clear_slot_regions, photo_rect
 from photobooth.compose.svg_template import compose_svg, render_svg_to_image
 from photobooth.compose.template_registry import TemplateRegistry, TemplateSpec
 from photobooth.compose.utils import duplicate_strip_to_sheet, fit_photo, mm_to_px
@@ -43,7 +43,24 @@ def render_template_preview(
 
     if not spec.image:
         raise RuntimeError("Template image not loaded")
-    return _render_png_template(spec.image, spec.slots, mapping, photos)
+    image = spec.image
+    slots = spec.slots
+    if width and height and (image.width > width or image.height > height):
+        scale = min(width / image.width, height / image.height)
+        nw = max(1, int(image.width * scale))
+        nh = max(1, int(image.height * scale))
+        image = image.resize((nw, nh), Image.BILINEAR)
+        slots = [
+            Slot(
+                x=max(0, int(s.x * scale)),
+                y=max(0, int(s.y * scale)),
+                w=max(1, int(s.w * scale)),
+                h=max(1, int(s.h * scale)),
+                index=s.index,
+            )
+            for s in slots
+        ]
+    return _render_png_template(image, slots, mapping, photos)
 
 
 def render_template_preview_legacy(

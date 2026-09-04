@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
@@ -19,10 +19,10 @@ from photobooth.ui.theme import (
     scroll_horizontal,
 )
 
-CARD_W = 340
-CARD_H = 400
+CARD_W = 280
+CARD_H = 340
 CARD_BORDER = 3
-THUMB_H = 320
+THUMB_H = 260
 THUMB_W = CARD_W - 20
 SCROLL_ROW_H = CARD_H + 18
 
@@ -49,7 +49,7 @@ def _preview_pixmap(spec: TemplateSpec) -> QPixmap | None:
     render_w, render_h = max(1, int(tw * scale)), max(1, int(th * scale))
     rendered = render_template_preview(spec, photos, width=render_w, height=render_h)
     pix = _pil_to_pixmap(rendered)
-    return pix.scaled(render_w, render_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    return pix.scaled(render_w, render_h, Qt.KeepAspectRatio, Qt.FastTransformation)
 
 
 def _clear_layout(layout) -> None:
@@ -97,6 +97,7 @@ class LayoutModeCard(QFrame):
         self.setCursor(Qt.PointingHandCursor)
         self._selected = selected
         self._spec = spec
+        self._thumb: QLabel | None = None
         self._build()
         self._apply_style()
 
@@ -114,15 +115,11 @@ class LayoutModeCard(QFrame):
         )
         thumb_layout = QVBoxLayout(thumb_wrap)
         thumb_layout.setContentsMargins(4, 4, 4, 4)
-        thumb = QLabel()
+        thumb = QLabel("…")
         thumb.setFixedHeight(min(THUMB_H, inner_h - 64))
         thumb.setAlignment(Qt.AlignCenter)
-        preview = _preview_pixmap(self._spec)
-        if preview is not None:
-            thumb.setPixmap(preview)
-        else:
-            thumb.setText("⚠" if not self._spec.valid else "?")
-            thumb.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 28px;")
+        thumb.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 22px;")
+        self._thumb = thumb
         thumb_layout.addWidget(thumb)
         title = QLabel(self._spec.meta.name)
         title.setStyleSheet(
@@ -138,6 +135,20 @@ class LayoutModeCard(QFrame):
         layout.addWidget(thumb_wrap)
         layout.addWidget(title)
         layout.addWidget(badge)
+
+    def schedule_thumb(self, delay_ms: int = 0) -> None:
+        QTimer.singleShot(delay_ms, self._load_thumb)
+
+    def _load_thumb(self) -> None:
+        if self._thumb is None:
+            return
+        preview = _preview_pixmap(self._spec)
+        if preview is not None:
+            self._thumb.setStyleSheet("")
+            self._thumb.setPixmap(preview)
+        else:
+            self._thumb.setText("⚠" if not self._spec.valid else "?")
+            self._thumb.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 28px;")
 
     def set_selected(self, selected: bool) -> None:
         if self._selected == selected:
@@ -172,9 +183,10 @@ class LayoutPickerWidget(QWidget):
         _clear_layout(self._layout)
         strip_cards: list[LayoutModeCard] = []
         full_cards: list[LayoutModeCard] = []
-        for spec in self._registry.list_modes():
+        for i, spec in enumerate(self._registry.list_modes()):
             card = LayoutModeCard(spec, selected=spec.mode_id == self._current)
             card.clicked_mode.connect(self._on_click)
+            card.schedule_thumb(i * 50)
             self._cards[spec.mode_id] = card
             if spec.meta.category == "strip":
                 strip_cards.append(card)

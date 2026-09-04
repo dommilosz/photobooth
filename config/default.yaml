@@ -8,8 +8,9 @@ camera:
   device: 0
   fourcc: MJPG
   preview_size:
-  - 640
   - 480
+  - 360
+  preview_fps: 12
   still_size:
   - 1920
   - 1080

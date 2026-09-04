@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from threading import Lock
 
 from PyQt5.QtCore import QThread, QTimer, Qt, pyqtSignal, QEvent
 from PyQt5.QtGui import QPixmap
@@ -96,6 +97,8 @@ class PhotoboothApp(QWidget):
         self._worker: SessionWorker | None = None
         self._suppress_preview = False
         self._soft_keyboard = None
+        self._latest_frame = None
+        self._frame_lock = Lock()
         self._progress = QLabel()
         self._progress.setAlignment(Qt.AlignCenter)
 
@@ -132,12 +135,18 @@ class PhotoboothApp(QWidget):
 
         self._build_ui()
         self._show_idle()
-        self.camera.set_frame_callback(self._on_frame)
+        self.camera.set_frame_callback(self._store_frame)
         self.camera.start_preview()
+
+        preview_fps = max(1, int(cfg.get("camera", {}).get("preview_fps", 12)))
+        self._preview_timer = QTimer(self)
+        self._preview_timer.timeout.connect(self._paint_latest_frame)
+        self._preview_timer.start(max(16, int(1000 / preview_fps)))
+
         self._mock_timer = QTimer(self)
         self._mock_timer.timeout.connect(self._pump_mock)
         if hasattr(self.camera, "pump_frame"):
-            self._mock_timer.start(33)
+            self._mock_timer.start(max(50, int(1000 / preview_fps)))
         self._retry_timer = QTimer(self)
         self._retry_timer.timeout.connect(self.upload.retry_pending)
         self._retry_timer.start(int(cfg.get("upload", {}).get("retry_interval_sec", 300)) * 1000)
@@ -160,8 +169,20 @@ class PhotoboothApp(QWidget):
         if hasattr(self.camera, "pump_frame"):
             self.camera.pump_frame()
 
-    def _on_frame(self, frame) -> None:
-        if self._main_stack.currentIndex() == 0 and not self._suppress_preview:
+    def _store_frame(self, frame) -> None:
+        # Camera thread: keep only the newest frame (drop backlog).
+        with self._frame_lock:
+            self._latest_frame = frame
+
+    def _paint_latest_frame(self) -> None:
+        if self._main_stack.currentIndex() != 0 or self._suppress_preview:
+            with self._frame_lock:
+                self._latest_frame = None
+            return
+        with self._frame_lock:
+            frame = self._latest_frame
+            self._latest_frame = None
+        if frame is not None:
             self._preview.show_frame(frame)
 
     def _build_ui(self) -> None:

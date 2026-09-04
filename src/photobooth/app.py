@@ -17,7 +17,13 @@ from photobooth.ui.theme import app_stylesheet
 
 
 def run_app(cfg: dict, mock: bool = False, dev: bool = False) -> int:
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    # High-DPI helps Windows laptops; disable on Linux kiosk (Pi Zero cost).
+    if sys.platform == "win32":
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    else:
+        QApplication.setAttribute(Qt.AA_DisableHighDpiScaling, True)
+    if hasattr(Qt, "AA_CompressHighFrequencyEvents"):
+        QApplication.setAttribute(Qt.AA_CompressHighFrequencyEvents, True)
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     app.setStyleSheet(app_stylesheet())
