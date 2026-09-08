@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import QPoint, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
@@ -18,6 +18,9 @@ from photobooth.ui.theme import (
     layout_picker_card,
     scroll_horizontal,
 )
+from photobooth.ui.widgets import enable_touch_scroll
+
+_TAP_SLOP_PX = 24
 
 CARD_W = 280
 CARD_H = 340
@@ -68,7 +71,7 @@ def _clear_layout(layout) -> None:
 def _horizontal_card_row(cards: list[QWidget]) -> QScrollArea:
     scroll = QScrollArea()
     scroll.setWidgetResizable(True)
-    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
     scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     scroll.setFrameShape(QFrame.NoFrame)
     scroll.setStyleSheet(scroll_horizontal())
@@ -83,6 +86,7 @@ def _horizontal_card_row(cards: list[QWidget]) -> QScrollArea:
         row.addWidget(card)
     row.addStretch()
     scroll.setWidget(container)
+    enable_touch_scroll(scroll)
     return scroll
 
 
@@ -98,6 +102,7 @@ class LayoutModeCard(QFrame):
         self._selected = selected
         self._spec = spec
         self._thumb: QLabel | None = None
+        self._press_pos: QPoint | None = None
         self._build()
         self._apply_style()
 
@@ -157,8 +162,27 @@ class LayoutModeCard(QFrame):
         self._apply_style()
 
     def mousePressEvent(self, event) -> None:
-        self.clicked_mode.emit(self._mode_id)
+        if event.button() == Qt.LeftButton:
+            self._press_pos = event.pos()
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        # Let parent QScroller take over once the finger moves past tap slop.
+        if self._press_pos is not None and (
+            (event.pos() - self._press_pos).manhattanLength() > _TAP_SLOP_PX
+        ):
+            self._press_pos = None
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if (
+            event.button() == Qt.LeftButton
+            and self._press_pos is not None
+            and (event.pos() - self._press_pos).manhattanLength() <= _TAP_SLOP_PX
+        ):
+            self.clicked_mode.emit(self._mode_id)
+        self._press_pos = None
+        super().mouseReleaseEvent(event)
 
 
 class LayoutPickerWidget(QWidget):

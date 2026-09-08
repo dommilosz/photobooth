@@ -2,9 +2,41 @@ from __future__ import annotations
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QScroller,
+    QScrollerProperties,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from photobooth.ui.theme import BG_DARK, FONT_FAMILY, primary_btn, secondary_btn
+
+
+def enable_touch_scroll(scroll: QScrollArea) -> None:
+    """Enable drag / flick scrolling for touchscreens (and mouse-emulated touch)."""
+    viewport = scroll.viewport()
+    viewport.setAttribute(Qt.WA_AcceptTouchEvents, True)
+    # Pi touch is often delivered as mouse; real multitouch uses TouchGesture.
+    QScroller.grabGesture(viewport, QScroller.LeftMouseButtonGesture)
+    QScroller.grabGesture(viewport, QScroller.TouchGesture)
+    scroller = QScroller.scroller(viewport)
+    props = scroller.scrollerProperties()
+    props.setScrollMetric(QScrollerProperties.DecelerationFactor, 0.12)
+    props.setScrollMetric(QScrollerProperties.MaximumVelocity, 0.75)
+    props.setScrollMetric(QScrollerProperties.DragStartDistance, 0.002)
+    props.setScrollMetric(
+        QScrollerProperties.HorizontalOvershootPolicy,
+        QScrollerProperties.OvershootAlwaysOff,
+    )
+    props.setScrollMetric(
+        QScrollerProperties.VerticalOvershootPolicy,
+        QScrollerProperties.OvershootAlwaysOff,
+    )
+    scroller.setScrollerProperties(props)
 
 _CORNER_STYLE = (
     f"font-family: {FONT_FAMILY}; font-size: 44px; font-weight: 700; color: white;"

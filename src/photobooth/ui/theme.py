@@ -96,15 +96,15 @@ LAYOUT_PILL = (
 
 SCROLL_AREA = (
     "QScrollArea { background: transparent; border: none; }"
-    f"QScrollBar:vertical {{ width: 8px; background: transparent; margin: 4px 2px; }}"
-    f"QScrollBar::handle:vertical {{ background: #48484f; border-radius: 4px; min-height: 24px; }}"
+    f"QScrollBar:vertical {{ width: 14px; background: transparent; margin: 4px 2px; }}"
+    f"QScrollBar::handle:vertical {{ background: #48484f; border-radius: 6px; min-height: 32px; }}"
     f"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}"
 )
 
 SCROLL_HORIZONTAL = (
     "QScrollArea { background: transparent; border: none; }"
-    "QScrollBar:horizontal { height: 8px; background: transparent; margin: 6px 0 0 0; }"
-    "QScrollBar::handle:horizontal { background: #48484f; border-radius: 4px; min-width: 32px; }"
+    "QScrollBar:horizontal { height: 14px; background: transparent; margin: 6px 0 0 0; }"
+    "QScrollBar::handle:horizontal { background: #48484f; border-radius: 6px; min-width: 40px; }"
     "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
 )
 

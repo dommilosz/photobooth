@@ -32,6 +32,7 @@ from photobooth.paths import app_root
 from photobooth.session import CaptureSession, SessionWorker, make_session_id
 from photobooth.ui.layout_picker import LayoutPickerWidget
 from photobooth.ui.preview import PreviewViewport, PreviewWidget, ScaledImageLabel
+from photobooth.ui.soft_keyboard import SoftKeyboard
 from photobooth.ui.theme import (
     BG_DARK,
     BG_PAGE,
@@ -54,8 +55,7 @@ from photobooth.ui.theme import (
     primary_btn,
     secondary_btn,
 )
-from photobooth.ui.soft_keyboard import SoftKeyboard
-from photobooth.ui.widgets import ActionButton, CountdownOverlay
+from photobooth.ui.widgets import ActionButton, CountdownOverlay, enable_touch_scroll
 
 log = logging.getLogger(__name__)
 
@@ -418,6 +418,7 @@ class PhotoboothApp(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setStyleSheet(SCROLL_AREA)
         content = QWidget()
         content.setStyleSheet("background: transparent;")
@@ -499,6 +500,7 @@ class PhotoboothApp(QWidget):
 
         layout.addStretch()
         scroll.setWidget(content)
+        enable_touch_scroll(scroll)
         root.addWidget(scroll, stretch=1)
         if self._soft_keyboard is not None:
             root.addWidget(self._soft_keyboard)
