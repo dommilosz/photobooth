@@ -133,6 +133,16 @@ def secondary_btn(size: int = 18, radius: int = 12, pad: str = "0 24px") -> str:
     )
 
 
+def danger_btn(size: int = 18, radius: int = 12, pad: str = "0 24px") -> str:
+    return (
+        f"QPushButton {{ background: #3a1f22; color: #f5a8ae; font-family: {FONT_FAMILY};"
+        f"font-size: {size}px; font-weight: 700; border-radius: {radius}px;"
+        f"border: 1px solid #6b3036; padding: {pad}; }}"
+        "QPushButton:hover { background: #4a262b; border-color: #8a4048; }"
+        "QPushButton:pressed { background: #2e181b; }"
+    )
+
+
 def card_style(radius: int = RADIUS_MD) -> str:
     return CARD.format(bg=BG_CARD, border=BORDER_SUBTLE, radius=radius)
 

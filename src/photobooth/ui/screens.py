@@ -33,6 +33,7 @@ from photobooth.session import CaptureSession, SessionWorker, make_session_id
 from photobooth.ui.layout_picker import LayoutPickerWidget
 from photobooth.ui.preview import PreviewViewport, PreviewWidget, ScaledImageLabel
 from photobooth.ui.soft_keyboard import SoftKeyboard
+from photobooth.ui.system_panel import SystemPanel
 from photobooth.ui.theme import (
     BG_DARK,
     BG_PAGE,
@@ -392,6 +393,30 @@ class PhotoboothApp(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
+        self._settings_stack = QStackedWidget()
+        self._settings_stack.addWidget(self._build_booth_settings())
+        self._system_panel = SystemPanel()
+        self._system_panel.back_requested.connect(self._show_booth_settings)
+        self._system_panel.exit_requested.connect(self.close)
+        self._settings_stack.addWidget(self._system_panel)
+        root.addWidget(self._settings_stack, stretch=1)
+
+        self._soft_keyboard: SoftKeyboard | None = None
+        if self.cfg.get("ui", {}).get("virtual_keyboard", True):
+            self._soft_keyboard = SoftKeyboard(page)
+            self._soft_keyboard.attach(self._event_edit)
+            self._system_panel.attach_keyboard(self._soft_keyboard)
+            root.addWidget(self._soft_keyboard)
+
+        return page
+
+    def _build_booth_settings(self) -> QWidget:
+        page = QWidget()
+        page.setStyleSheet(f"background: {BG_PAGE};")
+        root = QVBoxLayout(page)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
         nav = QFrame()
         nav.setFixedHeight(72)
         nav.setStyleSheet(nav_bar())
@@ -470,11 +495,6 @@ class PhotoboothApp(QWidget):
         event_layout.addWidget(self._event_edit)
         layout.addWidget(event_card)
 
-        self._soft_keyboard: SoftKeyboard | None = None
-        if self.cfg.get("ui", {}).get("virtual_keyboard", True):
-            self._soft_keyboard = SoftKeyboard(page)
-            self._soft_keyboard.attach(self._event_edit)
-
         layout.addWidget(self._settings_section_title("Display"))
         display_card = self._settings_card()
         display_layout = QVBoxLayout(display_card)
@@ -498,13 +518,19 @@ class PhotoboothApp(QWidget):
         diag_layout.addWidget(test_upload)
         layout.addWidget(diag_card)
 
+        layout.addWidget(self._settings_section_title("System"))
+        system_card = self._settings_card()
+        system_layout = QVBoxLayout(system_card)
+        system_layout.setContentsMargins(12, 12, 12, 12)
+        system_btn = ActionButton("Wi-Fi, IP & power...", height=56)
+        system_btn.clicked.connect(self._show_system_settings)
+        system_layout.addWidget(system_btn)
+        layout.addWidget(system_card)
+
         layout.addStretch()
         scroll.setWidget(content)
         enable_touch_scroll(scroll)
         root.addWidget(scroll, stretch=1)
-        if self._soft_keyboard is not None:
-            root.addWidget(self._soft_keyboard)
-
         return page
 
     def _settings_section_title(self, text: str) -> QLabel:
@@ -521,13 +547,24 @@ class PhotoboothApp(QWidget):
         if self._soft_keyboard is not None:
             self._soft_keyboard.hide_keyboard()
 
+    def _show_booth_settings(self) -> None:
+        self._hide_soft_keyboard()
+        self._settings_stack.setCurrentIndex(0)
+
+    def _show_system_settings(self) -> None:
+        self._hide_soft_keyboard()
+        self._system_panel.refresh_status()
+        self._settings_stack.setCurrentIndex(1)
+
     def _cancel_settings(self) -> None:
         self._hide_soft_keyboard()
+        self._show_booth_settings()
         self._show_idle()
 
     def _save_and_exit_settings(self) -> None:
         self._hide_soft_keyboard()
         self._save_settings()
+        self._show_booth_settings()
         self._show_idle()
 
     def _load_settings_form(self) -> None:
@@ -562,6 +599,7 @@ class PhotoboothApp(QWidget):
         self._sync_preview_chrome()
 
     def _show_settings(self) -> None:
+        self._show_booth_settings()
         self._load_settings_form()
         self._main_stack.setCurrentIndex(2)
 
@@ -626,7 +664,7 @@ class PhotoboothApp(QWidget):
         mode = self.cfg.get("layout", {}).get("mode", "strip_4_classic")
         prints = app_root() / self.cfg.get("paths", {}).get("prints_dir", "data/prints")
         self._sheet_path = prints / f"{self._session_id}_sheet.jpg"
-        self._upload_status.setText("Creating print…")
+        self._upload_status.setText("Creating print...")
         self._main_stack.setCurrentIndex(1)
         self._review_source = None
         self._update_review_image()
@@ -641,7 +679,7 @@ class PhotoboothApp(QWidget):
         self._sheet_path = Path(sheet_path)
         self._review_source = QPixmap(str(self._sheet_path))
         self._update_review_image()
-        self._upload_status.setText("Uploading…")
+        self._upload_status.setText("Uploading...")
         files = {Path(p).name: Path(p) for p in self._session_paths}
         files["sheet.jpg"] = self._sheet_path
         self._upload_worker = UploadWorker(self.upload, self._session_id, files)
