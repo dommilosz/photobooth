@@ -31,6 +31,7 @@ print:
   dpi: 300
   gap_mm: 2
   cups_queue: Canon_SELPHY_CP1300
+  fit_to_page: true
 event_name: photobooth
 upload:
   enabled: true

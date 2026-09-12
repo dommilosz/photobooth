@@ -84,25 +84,42 @@ def _title_from_mode_id(mode_id: str) -> str:
     return re.sub(r"\s+", " ", mode_id.replace("_", " ")).strip().title()
 
 
+def cups_media_for_sheet(sheet_mm: list[int] | tuple[int, ...] | None = None) -> str:
+    """CUPS media for the full print sheet. Selphy dye-subs typically only expose Postcard."""
+    del sheet_mm  # reserved for future size-specific mapping
+    return "Postcard"
+
+
 def _infer_meta(mode_id: str, category: str, slots: list[Slot]) -> TemplateMeta:
     count = len(slots)
+    sheet_mm = list(DEFAULT_SHEET_MM)
     return TemplateMeta(
         name=_title_from_mode_id(mode_id),
         capture_count=count,
         slot_mapping=list(range(count)),
-        sheet_mm=list(DEFAULT_SHEET_MM),
+        sheet_mm=sheet_mm,
+        cups_media=cups_media_for_sheet(sheet_mm),
         category=category,
     )
 
 
 def _meta_from_yaml(raw: dict, mode_id: str, category: str) -> TemplateMeta:
     sheet_mm = list(raw.get("sheet_mm", DEFAULT_SHEET_MM))
+    cups_media = (raw.get("cups_media") or "").strip()
+    # Half-strip / custom sizes are not usable on Selphy — force Postcard.
+    if not cups_media or cups_media in {
+        "w192h288",
+        "w288h192",
+        "Custom.100x150mm",
+        "Custom.150x100mm",
+    }:
+        cups_media = cups_media_for_sheet(sheet_mm)
     return TemplateMeta(
         name=raw.get("name", _title_from_mode_id(mode_id)),
         capture_count=int(raw.get("capture_count", 0)),
         slot_mapping=list(raw.get("slot_mapping", [])),
         sheet_mm=sheet_mm,
-        cups_media=raw.get("cups_media", ""),
+        cups_media=cups_media,
         category=raw.get("category") or category,
     )
 

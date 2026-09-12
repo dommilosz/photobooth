@@ -17,12 +17,13 @@ name: "My Event"
 capture_count: 4
 slot_mapping: [0, 1, 2, 3]  # one index per slot on the template PNG
 sheet_mm: [100, 150]
-cups_media: "w288h192"
+cups_media: "Postcard"
 category: strip   # or full
 ```
 
 - `capture_count` — how many photos to take per session
 - `slot_mapping` — one index per detected slot on the template PNG (for strip layouts this is a single column; the print sheet duplicates it side by side)
+- `cups_media` — for Selphy use `Postcard` only. Do **not** use strip-half sizes like `w192h288` — CUPS will split one job into 2 pages.
 
 ## Install
 

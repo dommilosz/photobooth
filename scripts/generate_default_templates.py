@@ -119,7 +119,7 @@ META = {
         "capture_count": 4,
         "slot_mapping": [0, 1, 2, 3],
         "sheet_mm": [100, 150],
-        "cups_media": "w192h288",
+        "cups_media": "Postcard",
         "category": "strip",
     },
     "strip_3_large": {
@@ -127,7 +127,7 @@ META = {
         "capture_count": 3,
         "slot_mapping": [0, 1, 2],
         "sheet_mm": [100, 150],
-        "cups_media": "w192h288",
+        "cups_media": "Postcard",
         "category": "strip",
     },
     "full_grid_4": {
@@ -135,7 +135,7 @@ META = {
         "capture_count": 4,
         "slot_mapping": [0, 1, 2, 3],
         "sheet_mm": [100, 150],
-        "cups_media": "w192h288",
+        "cups_media": "Postcard",
         "category": "full",
     },
     "full_1_plus_2": {
@@ -143,7 +143,7 @@ META = {
         "capture_count": 3,
         "slot_mapping": [0, 1, 2],
         "sheet_mm": [100, 150],
-        "cups_media": "w192h288",
+        "cups_media": "Postcard",
         "category": "full",
     },
 }

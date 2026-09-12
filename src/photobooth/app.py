@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sys
 
 from PyQt5.QtCore import Qt
@@ -33,6 +34,7 @@ def run_app(cfg: dict, mock: bool = False, dev: bool = False) -> int:
     flash = create_flash(cfg)
     printer = create_printer(cfg, dev=dev)
     upload = create_upload(cfg, dev=dev)
+    logging.getLogger(__name__).info("Printer: %s", printer.status_message())
     window = PhotoboothApp(cfg, camera, flash, printer, upload, registry)
     window.apply_display_mode()
     return app.exec_()

@@ -696,9 +696,16 @@ class PhotoboothApp(QWidget):
 
     def _do_print(self) -> None:
         if not self._sheet_path:
+            self._upload_status.setText("Print failed — no sheet to print")
             return
         spec = self.registry.load(self.cfg.get("layout", {}).get("mode", "strip_4_classic"))
-        self.printer.print_image(self._sheet_path, spec.meta.cups_media or None)
+        media = spec.meta.cups_media or None
+        log.info("Print requested path=%s media=%s printer=%s", self._sheet_path, media, self.printer.status_message())
+        ok = self.printer.print_image(self._sheet_path, media)
+        if ok:
+            self._upload_status.setText(f"Printing… ({self.printer.status_message()})")
+        else:
+            self._upload_status.setText("Print failed — check CUPS / cups_queue (see journalctl)")
         QTimer.singleShot(30000, self._show_idle)
 
     def _on_error(self, msg: str) -> None:

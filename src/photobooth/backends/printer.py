@@ -31,7 +31,12 @@ def create_printer(cfg: dict, dev: bool = False) -> PrinterBackend:
         from photobooth.backends.cups_printer import CupsPrinter
 
         return CupsPrinter(cfg)
-    except Exception:
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "CUPS printer unavailable (%s) — falling back to file printer", exc
+        )
         from photobooth.backends.file_printer import FilePrinter
 
         return FilePrinter(cfg)

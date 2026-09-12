@@ -161,5 +161,13 @@ def compose_sheet(
 
     output.parent.mkdir(parents=True, exist_ok=True)
     rgb = result if result.mode == "RGB" else result.convert("RGB")
-    rgb.save(output, "JPEG", quality=quality, optimize=False, subsampling=2)
+    # Embed real DPI so CUPS does not assume 72 DPI (that spills one sheet onto 2+ pages).
+    rgb.save(
+        output,
+        "JPEG",
+        quality=quality,
+        optimize=False,
+        subsampling=2,
+        dpi=(dpi, dpi),
+    )
     return output
