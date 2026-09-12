@@ -4,9 +4,12 @@ from abc import ABC, abstractmethod
 
 
 class FlashBackend(ABC):
+    def on(self, safety_ms: int | None = None) -> None:
+        """Turn lamp on (optional safety auto-off)."""
+
     @abstractmethod
     def fire(self, warmup_ms: int, duration_ms: int) -> None:
-        """Turn on flash, wait warmup, caller captures, then flash turns off after duration."""
+        """Turn on flash, wait warmup; caller captures, then should call off()."""
 
     @abstractmethod
     def test_pulse(self, ms: int) -> None:

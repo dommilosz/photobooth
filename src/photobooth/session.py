@@ -47,14 +47,43 @@ class CaptureSession(QObject):
         self._paths = []
         try:
             for i in range(self._photo_count):
+                # Countdown: do slow camera arming during the last "1",
+                # so tick 0 = flash + shutter (not prepare).
                 for t in range(self._countdown, 0, -1):
                     self.countdown_tick.emit(t)
-                    time.sleep(1)
-                self.countdown_tick.emit(0)
-                self._flash.fire(self._warmup, self._duration)
-                self.flash_fired.emit()
+                    if t == 1:
+                        t0 = time.monotonic()
+                        self._camera.prepare_still()
+                        log.info(
+                            "Photo %d prepare_still during countdown-1: %.0fms",
+                            i + 1,
+                            (time.monotonic() - t0) * 1000.0,
+                        )
+                        remaining = 1.0 - (time.monotonic() - t0)
+                        if remaining > 0:
+                            time.sleep(remaining)
+                    else:
+                        time.sleep(1)
+
                 path = str(self._session_dir / f"photo_{i + 1:02d}.jpg")
-                if not self._camera.capture_still(path):
+                ok = False
+                try:
+                    self.countdown_tick.emit(0)
+                    self._flash.fire(self._warmup, self._duration)
+                    self.flash_fired.emit()
+                    t1 = time.monotonic()
+                    ok = self._camera.capture_still(path)
+                    log.info(
+                        "Photo %d shutter at countdown-0: %.0fms ok=%s",
+                        i + 1,
+                        (time.monotonic() - t1) * 1000.0,
+                        ok,
+                    )
+                finally:
+                    self._flash.off()
+                    self._camera.resume_preview()
+
+                if not ok:
                     self.error.emit(f"Failed to capture photo {i + 1}")
                     return
                 self._paths.append(path)
@@ -64,6 +93,14 @@ class CaptureSession(QObject):
             self.session_complete.emit(self._paths)
         except Exception as e:
             log.exception("Capture session failed")
+            try:
+                self._flash.off()
+            except Exception:
+                pass
+            try:
+                self._camera.resume_preview()
+            except Exception:
+                pass
             self.error.emit(str(e))
 
 

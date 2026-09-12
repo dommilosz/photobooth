@@ -57,3 +57,9 @@ class MockCamera(CameraBackend):
         import cv2
 
         return cv2.imwrite(path, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+
+    def prepare_still(self) -> None:
+        return
+
+    def resume_preview(self) -> None:
+        return

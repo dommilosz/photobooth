@@ -25,8 +25,9 @@ flash:
   enabled: true
   gpio_pin: 17
   active_high: true
-  warmup_ms: 80
-  duration_ms: 200
+  warmup_ms: 100
+  duration_ms: 3000
+  safety_ms: 5000
 print:
   dpi: 300
   gap_mm: 2
