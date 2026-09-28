@@ -120,7 +120,15 @@ def compose_sheet(
     output: Path,
     quality: int = 90,
     dpi: int = 300,
-) -> Path:
+    *,
+    preview_output: Path | None = None,
+) -> tuple[Path, Path]:
+    """Compose print sheet and optional single-strip UI preview.
+
+    Returns ``(sheet_path, preview_path)``. For strip layouts the preview is one
+    column; the sheet still has two strips side-by-side for printing. For full
+    layouts both paths point at the same image.
+    """
     spec = registry.load(mode_id)
     if not spec.valid:
         raise RuntimeError(spec.error or f"Template not valid: {mode_id}")
@@ -152,14 +160,26 @@ def compose_sheet(
             raise RuntimeError(f"Template not loaded: {mode_id}")
         strip = _render_png_template(spec.image, spec.slots, mapping, photos)
 
+    output.parent.mkdir(parents=True, exist_ok=True)
+
     if spec.meta.category == "strip":
+        preview_path = preview_output or output.with_name(f"{output.stem}_preview.jpg")
+        strip_rgb = strip if strip.mode == "RGB" else strip.convert("RGB")
+        strip_rgb.save(
+            preview_path,
+            "JPEG",
+            quality=quality,
+            optimize=False,
+            subsampling=2,
+            dpi=(dpi, dpi),
+        )
         result = duplicate_strip_to_sheet(
             strip, print_w, print_h, sheet_width_mm=spec.meta.sheet_mm[0], dpi=dpi
         )
     else:
+        preview_path = output
         result = strip
 
-    output.parent.mkdir(parents=True, exist_ok=True)
     rgb = result if result.mode == "RGB" else result.convert("RGB")
     # Embed real DPI so CUPS does not assume 72 DPI (that spills one sheet onto 2+ pages).
     rgb.save(
@@ -170,4 +190,4 @@ def compose_sheet(
         subsampling=2,
         dpi=(dpi, dpi),
     )
-    return output
+    return output, preview_path

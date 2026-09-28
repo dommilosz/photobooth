@@ -76,7 +76,7 @@ class UploadWorker(QThread):
 
 
 class ComposeWorker(QThread):
-    finished_ok = pyqtSignal(str)
+    finished_ok = pyqtSignal(str, str)  # sheet_path, preview_path
     failed = pyqtSignal(str)
 
     def __init__(
@@ -94,8 +94,10 @@ class ComposeWorker(QThread):
 
     def run(self) -> None:
         try:
-            compose_sheet(self._photos, self._registry, self._mode, self._output)
-            self.finished_ok.emit(str(self._output))
+            sheet, preview = compose_sheet(
+                self._photos, self._registry, self._mode, self._output
+            )
+            self.finished_ok.emit(str(sheet), str(preview))
         except Exception as e:
             log.exception("Compose failed")
             self.failed.emit(str(e))
@@ -688,9 +690,9 @@ class PhotoboothApp(QWidget):
         self._compose_worker.failed.connect(self._on_error)
         self._compose_worker.start()
 
-    def _on_compose_done(self, sheet_path: str) -> None:
+    def _on_compose_done(self, sheet_path: str, preview_path: str) -> None:
         self._sheet_path = Path(sheet_path)
-        self._review_source = QPixmap(str(self._sheet_path))
+        self._review_source = QPixmap(preview_path)
         self._update_review_image()
         self._upload_status.setText("Uploading...")
         files = {Path(p).name: Path(p) for p in self._session_paths}
