@@ -9,7 +9,13 @@ def app_root() -> Path:
 
 
 def config_path() -> Path:
+    """Shipped defaults (tracked in git)."""
     return app_root() / "config" / "default.yaml"
+
+
+def local_config_path() -> Path:
+    """Machine-specific overrides (gitignored)."""
+    return app_root() / "config" / "local.yaml"
 
 
 def templates_dir() -> Path:

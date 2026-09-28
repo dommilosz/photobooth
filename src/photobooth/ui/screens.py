@@ -264,36 +264,49 @@ class PhotoboothApp(QWidget):
         root.setSpacing(0)
         root.addWidget(self._make_page_nav("Review & Print"))
 
-        content = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(24, 24, 24, 16)
-        content_layout.setSpacing(16)
+        body = QWidget()
+        body_row = QHBoxLayout(body)
+        body_row.setContentsMargins(16, 12, 16, 16)
+        body_row.setSpacing(16)
 
+        # Large print preview — takes most of the horizontal space.
         frame = QFrame()
         frame.setStyleSheet(card_style())
         frame_layout = QVBoxLayout(frame)
-        frame_layout.setContentsMargins(16, 16, 16, 16)
+        frame_layout.setContentsMargins(8, 8, 8, 8)
+        frame_layout.setSpacing(0)
+        self._review_image.setMinimumSize(0, 0)
+        self._review_image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         frame_layout.addWidget(self._review_image)
-        content_layout.addWidget(frame, stretch=1)
+        body_row.addWidget(frame, stretch=1)
 
-        self._upload_status.setStyleSheet(
-            f"color: {TEXT_DIM}; font-family: {FONT_FAMILY}; font-size: 14px;"
-            "background: transparent; padding: 6px;"
-        )
-        content_layout.addWidget(self._upload_status)
-        root.addWidget(content, stretch=1)
+        # Actions on the side so the strip can use full height.
+        side = QFrame()
+        side.setFixedWidth(220)
+        side.setStyleSheet("background: transparent;")
+        side_col = QVBoxLayout(side)
+        side_col.setContentsMargins(0, 4, 0, 4)
+        side_col.setSpacing(12)
 
-        dock = self._make_bottom_dock()
-        dock_row = QHBoxLayout(dock)
-        dock_row.setContentsMargins(20, 16, 20, 16)
-        dock_row.setSpacing(16)
-        retake = ActionButton("Retake")
-        retake.clicked.connect(self._show_idle)
-        print_btn = ActionButton("Print", primary=True)
+        print_btn = ActionButton("Print", primary=True, height=88)
         print_btn.clicked.connect(self._do_print)
-        dock_row.addWidget(retake, stretch=1)
-        dock_row.addWidget(print_btn, stretch=2)
-        root.addWidget(dock)
+        retake = ActionButton("Retake", height=72)
+        retake.clicked.connect(self._show_idle)
+
+        self._upload_status.setWordWrap(True)
+        self._upload_status.setAlignment(Qt.AlignCenter)
+        self._upload_status.setStyleSheet(
+            f"color: {TEXT_DIM}; font-family: {FONT_FAMILY}; font-size: 13px;"
+            "background: transparent; padding: 8px 4px;"
+        )
+
+        side_col.addWidget(print_btn)
+        side_col.addWidget(retake)
+        side_col.addStretch(1)
+        side_col.addWidget(self._upload_status)
+        body_row.addWidget(side, stretch=0)
+
+        root.addWidget(body, stretch=1)
         return page
 
     def _update_layout_badge(self) -> None:

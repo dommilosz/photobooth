@@ -48,4 +48,9 @@ Place `my_layout.png` + `my_layout.meta.yaml` in `templates/`. See [docs/templat
 
 ## Configuration
 
-Edit `config/default.yaml` — event name, layout mode, flash GPIO, printer queue, Nextcloud share URL.
+- `config/default.yaml` — shipped defaults (in git)
+- `config/local.yaml` — **your machine settings** (gitignored; created on Save in Settings)
+
+Local overrides are merged on top of defaults, so `git pull` no longer resets event name, layout, upload URL, etc.
+
+You can also pass an explicit file: `python -m photobooth.main --config /path/to/config.yaml`
