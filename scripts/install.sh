@@ -5,16 +5,16 @@ sudo apt-get update
 sudo apt-get install -y \
   python3 python3-pip python3-venv \
   python3-opencv python3-pyqt5 python3-pil python3-yaml \
-  python3-requests python3-gpiozero python3-numpy \
+  python3-requests python3-gpiozero python3-numpy python3-serial \
   cups libcups2-dev v4l-utils network-manager
 
 cd "$ROOT"
 python3 scripts/generate_default_templates.py
 python3 -m pip install -e .
 
-# Wi-Fi + power actions from the System settings panel
+# Wi-Fi + power + USB serial lamp + webcam
 if id -u pi >/dev/null 2>&1; then
-  sudo usermod -aG netdev,video pi || true
+  sudo usermod -aG netdev,video,dialout pi || true
 fi
 if [[ -d /etc/sudoers.d ]]; then
   echo 'pi ALL=(ALL) NOPASSWD: /bin/systemctl reboot, /bin/systemctl poweroff, /sbin/reboot, /sbin/poweroff, /usr/bin/systemctl reboot, /usr/bin/systemctl poweroff' \

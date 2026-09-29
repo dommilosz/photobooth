@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+import sys
 from abc import ABC, abstractmethod
+
+log = logging.getLogger(__name__)
 
 
 class FlashBackend(ABC):
@@ -21,18 +25,35 @@ class FlashBackend(ABC):
 
 
 def create_flash(cfg: dict) -> FlashBackend:
-    import sys
-
     flash_cfg = cfg.get("flash", {})
-    if not flash_cfg.get("enabled", True) or sys.platform != "linux":
+    if not flash_cfg.get("enabled", True):
         from photobooth.backends.mock_flash import MockFlash
 
         return MockFlash()
+
+    backend = str(flash_cfg.get("backend", "gpio")).strip().lower()
+    if backend in ("serial", "usb", "usb_serial"):
+        try:
+            from photobooth.backends.serial_flash import SerialFlash
+
+            return SerialFlash(flash_cfg)
+        except Exception:
+            log.exception("Serial flash init failed — using mock")
+            from photobooth.backends.mock_flash import MockFlash
+
+            return MockFlash()
+
+    if backend == "mock" or (backend == "gpio" and sys.platform != "linux"):
+        from photobooth.backends.mock_flash import MockFlash
+
+        return MockFlash()
+
     try:
         from photobooth.backends.gpio_flash import GpioFlash
 
         return GpioFlash(flash_cfg)
     except Exception:
+        log.exception("GPIO flash init failed — using mock")
         from photobooth.backends.mock_flash import MockFlash
 
         return MockFlash()

@@ -23,8 +23,16 @@ layout:
   templates_dir: templates
 flash:
   enabled: true
+  # gpio | serial | mock
+  backend: gpio
+  # --- GPIO lamp (backend: gpio) ---
   gpio_pin: 17
   active_high: true
+  # --- USB serial lamp (backend: serial) — commands: "D <power>\n" / "D 0\n" ---
+  serial_port: /dev/ttyUSB0
+  serial_baud: 115200
+  power: 100
+  off_power: 0
   warmup_ms: 100
   duration_ms: 3000
   safety_ms: 5000
